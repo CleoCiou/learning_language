@@ -75,9 +75,12 @@
     <div style="margin-bottom:10px;">
       <label><input type="checkbox" id="wordCheckbox" checked> 單字</label>
       <label style="margin-left:10px;"><input type="checkbox" id="sentenceCheckbox" checked> 句子</label>
+      <label>
+        <input type="checkbox" id="autoNextCheckbox">自動跳題
+      </label>
     </div>
     <div id="questionText"></div>
-    <button id="audioBtn" onclick="playAudio()">🔊 播放韓文</button>
+    <button id="audioBtn" onclick="playQuestion()">🔊 播放韓文</button>
     <button onclick="nextQuestion()">下一題</button>
     <div id="options"></div>
     <div id="feedback"></div>
@@ -96,12 +99,11 @@
       listening: { total: 0, correct: 0, wrongWords: {} },
       spelling: { total: 0, correct: 0, wrongWords: {} }
     };
+
     // 取得目前模式的 stats
     function getCurrentStats() {
       return stats[mode] || { total: 0, correct: 0, wrongWords: {} };
     }
-
-
 
     // 顯示 localStorage 狀態
     function updateLocalDataInfo() {
@@ -323,6 +325,7 @@
 
       document.getElementById("feedback").innerText = "";
     }
+    
     // 拼寫測驗送出答案
     function submitSpelling() {
       let input = document.getElementById('spellingInput');
@@ -344,14 +347,14 @@
       }
       // 顯示詳細資訊
       let rows = [];
-      rows.push(`<tr style=\"background:#99ee99;\">
-        <td class="cell-nowrap" onclick=\"playSentenceAudio('${question[0]}')\">${question[0]}</td>
+      rows.push(`<tr style="background:#99ee99;">
+        <td class="cell-nowrap" onclick="playAudio('${question[0]}')">${question[0]}</td>
         <td class="cell-nowrap">${question[1]}</td>
-        <td onclick=\"playSentenceAudio('${question[2]}')\">${question[2]}</td>
+        <td onclick="playAudio('${question[2]}')">${question[2]}</td>
         <td>${question[3]}</td>
       </tr>`);
       feedback.innerHTML += `
-        <table border=\"1\" cellpadding=\"5\" cellspacing=\"0\">
+        <table border="1" cellpadding="5" cellspacing="0">
           <thead>
             <tr>
               <th class="cell-nowrap">韓文</th>
@@ -371,9 +374,12 @@
         utter.lang = "ko-KR";
         speechSynthesis.speak(utter);
       }, 200);
-  updateStats();
-      // 下一題
-      setTimeout(nextQuestion, 1500);
+      updateStats();
+      // 自動跳題邏輯
+      const autoNext = document.getElementById('autoNextCheckbox')?.checked;
+      if (autoNext) {
+        setTimeout(nextQuestion, 1500);
+      }
     }
 
     function checkAnswer(selected, correct, question) {
@@ -394,9 +400,9 @@
       // 決定正確答案 row
       let correctRow = question;
       rows.push(`<tr style=\"background:#99ee99;\">
-        <td class="cell-nowrap" onclick=\"playSentenceAudio('${correctRow[0]}')\">${correctRow[0]}</td>
+        <td class="cell-nowrap" onclick=\"playAudio('${correctRow[0]}')\">${correctRow[0]}</td>
         <td class="cell-nowrap">${correctRow[1]}</td>
-        <td onclick=\"playSentenceAudio('${correctRow[2]}')\">${correctRow[2]}</td>
+        <td onclick=\"playAudio('${correctRow[2]}')\">${correctRow[2]}</td>
         <td>${correctRow[3]}</td>
       </tr>`);
       // 如果選擇錯誤且選擇的不是正確答案，顯示選擇的 row
@@ -412,9 +418,9 @@
         if (found) selectedRow = found;
         if (selectedRow) {
           rows.push(`<tr style=\"background:#ee9999;\">
-            <td class="cell-nowrap" onclick=\"playSentenceAudio('${selectedRow[0]}')\">${selectedRow[0]}</td>
+            <td class="cell-nowrap" onclick=\"playAudio('${selectedRow[0]}')\">${selectedRow[0]}</td>
             <td class="cell-nowrap">${selectedRow[1]}</td>
-            <td onclick=\"playSentenceAudio('${selectedRow[2]}')\">${selectedRow[2]}</td>
+            <td onclick=\"playAudio('${selectedRow[2]}')\">${selectedRow[2]}</td>
             <td>${selectedRow[3]}</td>
           </tr>`);
         }
@@ -443,27 +449,23 @@
         </table>
       `;
       updateStats();
-      // setTimeout(nextQuestion, 1500);
+      // 自動跳題邏輯
+      const autoNext = document.getElementById('autoNextCheckbox')?.checked;
+      if (autoNext) {
+        setTimeout(nextQuestion, 1500);
+      }
     }
 
-    function playAudio() {
+    function playAudio(text, lang = "ko-KR") {
+      let utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      speechSynthesis.speak(utterance);
+    }
+
+    function playQuestion() {
       if (!currentQuestion) return;
       let text = (readingType === "word") ? currentQuestion[0] : currentQuestion[2];
-      let utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ko-KR";
-      speechSynthesis.speak(utterance);
-    }
-
-    function playWordAudio(text) {
-      let utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ko-KR";
-      speechSynthesis.speak(utterance);
-    }
-
-    function playSentenceAudio(text) {
-      let utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ko-KR";
-      speechSynthesis.speak(utterance);
+      playAudio(text);
     }
 
     function playAllWordAudio() {
@@ -633,9 +635,9 @@
           <tbody>
             ${pageData.map(row => `
               <tr>
-                <td class="cell-nowrap" onclick=\"playWordAudio('${row[0]}')\">${row[0]}</td>
+                <td class="cell-nowrap" onclick="playAudio('${row[0]}')">${row[0]}</td>
                 <td class="cell-nowrap">${row[1]}</td>
-                <td onclick=\"playSentenceAudio('${row[2]}')\">${row[2]}</td>
+                <td onclick="playAudio('${row[2]}')">${row[2]}</td>
                 <td>${row[3]}</td>
               </tr>
             `).join("")}
