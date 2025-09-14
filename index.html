@@ -231,14 +231,24 @@
           // 句子題：顯示挖空韓文
           let sentence = currentQuestion[2];
           let word = currentQuestion[0];
-          let blanked = sentence.replace(word, '____');
-          correctAnswer = word;
+          let alt = currentQuestion[4] || "";
+          let blanked = "";
+          // 先用單字挖空，若找不到則用第五欄(變形字)
+          if (sentence && word && sentence.includes(word)) {
+            blanked = sentence.replace(word, '____');
+            correctAnswer = word;
+          } else if (sentence && alt && sentence.includes(alt)) {
+            blanked = sentence.replace(alt, '____');
+            correctAnswer = alt;
+          } else {
+            blanked = sentence;
+            correctAnswer = word;
+          }
           questionText = `<span style='font-size:1.2em;'>請填入空格：</span><br><span style='font-size:1.5em;'>${blanked}</span>`;
           showAudioBtn = false;
           inputHtml = `<div class='spelling-row'><input id='spellingInput' type='text' style='font-size:1.5em; flex:1; margin:10px 0;'> <button style='white-space:nowrap;' onclick='submitSpelling()'>送出</button> <button type='button' style='white-space:nowrap;' onclick='replaySpellingAudio()'>再次播放</button></div>`;
           // 新增：自動語音念出挖空後的韓文句子
           setTimeout(function() {
-            let sentence = currentQuestion[2];
             let utter = new SpeechSynthesisUtterance(sentence);
             utter.lang = "ko-KR";
             speechSynthesis.speak(utter);
