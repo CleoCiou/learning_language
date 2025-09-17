@@ -656,13 +656,15 @@
         <div style='padding-top:10px; text-align: center;'>
           <button ${vocabPage === 1 ? 'disabled' : ''} onclick='saveVocabSettings();showVocabularyList(${vocabPage - 1})'>上一頁</button>
           第 ${vocabPage} / ${totalPages} 頁
+          <input id="gotoPageInput" type="number" min="1" max="${totalPages}" value="${vocabPage}" style="width:50px; margin:0 4px;">
+          <button onclick="gotoVocabPage(${totalPages})">跳頁</button>
           <button ${vocabPage === totalPages ? 'disabled' : ''} onclick='saveVocabSettings();showVocabularyList(${vocabPage + 1})'>下一頁</button>
         </div>
       `;
       document.getElementById("quiz").style.display = "none";
       document.getElementById("stats").innerHTML = vocabHtml;
 
-      // 綁定 checkbox 與 input 事件，變動時即時存入暫存
+      // 綁定 checkbox、input 事件，變動時即時存入暫存，並處理跳頁
       setTimeout(() => {
         let loopCheckbox = document.getElementById("loopCheckbox");
         let autoPageCheckbox = document.getElementById("autoPageCheckbox");
@@ -670,7 +672,25 @@
         if (loopCheckbox) loopCheckbox.onchange = saveVocabSettings;
         if (autoPageCheckbox) autoPageCheckbox.onchange = saveVocabSettings;
         if (intervalInput) intervalInput.oninput = saveVocabSettings;
+        // 跳頁功能
+        let gotoInput = document.getElementById("gotoPageInput");
+        if (gotoInput) {
+          gotoInput.onkeydown = function(e) {
+            if (e.key === 'Enter') gotoVocabPage(totalPages);
+          };
+        }
       }, 0);
+
+      // 跳頁 function
+      window.gotoVocabPage = function(totalPages) {
+        let input = document.getElementById("gotoPageInput");
+        if (!input) return;
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) val = 1;
+        if (val > totalPages) val = totalPages;
+        saveVocabSettings();
+        showVocabularyList(val);
+      };
     }
 
     // 換頁前先存設定
@@ -980,6 +1000,14 @@
         let boxes = document.querySelectorAll('.wordCheckboxSetting');
         boxes.forEach(box => { box.checked = checked; });
       };
+    }
+  
+    function resetQuizStats() {
+      if (confirm("確定要將測驗統計歸零嗎？這個動作無法復原！")) {
+        localStorage.removeItem('quizStats');
+        updateStats();
+        alert("測驗統計已歸零！");
+      }
     }
   </script>
 </body>
