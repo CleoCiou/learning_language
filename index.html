@@ -945,12 +945,14 @@
         <div style='padding-top:10px; text-align: center;'>
           <button ${settingsPage === 1 ? 'disabled' : ''} onclick='showSettings(${settingsPage - 1})'>上一頁</button>
           第 ${settingsPage} / ${totalPages} 頁
+          <input id="gotoSettingsPageInput" type="number" min="1" max="${totalPages}" value="${settingsPage}" style="width:50px; margin:0 4px;">
+          <button onclick="gotoSettingsPage(${totalPages})">跳頁</button>
           <button ${settingsPage === totalPages ? 'disabled' : ''} onclick='showSettings(${settingsPage + 1})'>下一頁</button>
         </div>
       `;
       document.getElementById("quiz").style.display = "none";
       document.getElementById("stats").innerHTML = settingsHtml;
-      // 綁定 checkbox 事件
+      // 綁定 checkbox 事件與跳頁功能
       setTimeout(() => {
         let boxes = document.querySelectorAll('.wordCheckboxSetting');
         boxes.forEach(box => {
@@ -970,7 +972,24 @@
             if (selectAll) selectAll.checked = allChecked;
           };
         });
+        // 跳頁功能
+        let gotoInput = document.getElementById("gotoSettingsPageInput");
+        if (gotoInput) {
+          gotoInput.onkeydown = function(e) {
+            if (e.key === 'Enter') gotoSettingsPage(totalPages);
+          };
+        }
       }, 0);
+
+      // 跳頁 function
+      window.gotoSettingsPage = function(totalPages) {
+        let input = document.getElementById("gotoSettingsPageInput");
+        if (!input) return;
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) val = 1;
+        if (val > totalPages) val = totalPages;
+        showSettings(val);
+      };
 
 
       // 全選切換
